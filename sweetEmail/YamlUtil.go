@@ -6,38 +6,38 @@ import (
 	"strings"
 )
 
-func ValueObject(key string) interface{} {
+func valueObject(key string) interface{} {
 	return getYamlValue(key)
 }
 
-func ValueInt(key string) int {
+func valueInt(key string) int {
 	val := getYamlValue(key)
 	return val.(int)
 }
 
-func ValueInt64(key string) int64 {
-	return int64(ValueInt(key))
+func valueInt64(key string) int64 {
+	return int64(valueInt(key))
 }
 
-func ValueInt32(key string) int32 {
-	return int32(ValueInt(key))
+func valueInt32(key string) int32 {
+	return int32(valueInt(key))
 }
 
-func ValueFloat32(key string) float32 {
-	return float32(ValueFloat64(key))
+func valueFloat32(key string) float32 {
+	return float32(valueFloat64(key))
 }
 
-func ValueFloat64(key string) float64 {
+func valueFloat64(key string) float64 {
 	val := getYamlValue(key)
 	return val.(float64)
 }
 
-func ValueBool(key string) bool {
+func valueBool(key string) bool {
 	val := getYamlValue(key)
 	return val.(bool)
 }
 
-func ValueString(key string) string {
+func valueString(key string) string {
 	val := getYamlValue(key)
 	if val == nil {
 		return ""
@@ -45,7 +45,7 @@ func ValueString(key string) string {
 	return val.(string)
 }
 
-func ValueStringArr(key string) []string {
+func valueStringArr(key string) []string {
 	val := getYamlValue(key)
 	val2 := val.([]interface{})
 	var arr []string

@@ -2,7 +2,7 @@ package sweetEmail
 
 import "strings"
 
-func IsEmpty(str string) bool {
+func isEmpty(str string) bool {
 	if len(str) == 0 {
 		return true
 	}
@@ -13,6 +13,6 @@ func IsEmpty(str string) bool {
 	return false
 }
 
-func IsNotEmpty(str string) bool {
-	return !IsEmpty(str)
+func isNotEmpty(str string) bool {
+	return !isEmpty(str)
 }

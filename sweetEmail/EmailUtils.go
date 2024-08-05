@@ -26,7 +26,7 @@ func SetHost(host string) {
 	if regFlag {
 		return
 	}
-	if IsEmpty(host) {
+	if isEmpty(host) {
 		panic("host cannot be empty")
 	}
 	conf.Host = host
@@ -36,7 +36,7 @@ func SetUserName(userName string) {
 	if regFlag {
 		return
 	}
-	if IsEmpty(userName) {
+	if isEmpty(userName) {
 		panic("userName cannot be empty")
 	}
 	conf.UserName = userName
@@ -46,7 +46,7 @@ func SetPassword(password string) {
 	if regFlag {
 		return
 	}
-	if IsEmpty(password) {
+	if isEmpty(password) {
 		panic("password cannot be empty")
 	}
 	conf.Password = password
@@ -78,12 +78,13 @@ func OpenLog() {
 				emailname: Sweet
 */
 func AutoRegister(flag bool) {
-	conf.Port = ValueInt("${sweet.email.port}")
-	conf.Host = ValueString("${sweet.email.host}")
-	conf.UserName = ValueString("${sweet.email.username}")
-	conf.Password = ValueString("${sweet.email.password}")
-	conf.EmailName = ValueString("${sweet.email.emailname}")
+	conf.Port = valueInt("${sweet.email.port}")
+	conf.Host = valueString("${sweet.email.host}")
+	conf.UserName = valueString("${sweet.email.username}")
+	conf.Password = valueString("${sweet.email.password}")
+	conf.EmailName = valueString("${sweet.email.emailname}")
 	logFlag = flag
+	logger.Info("port: %d, host: %s, username: %s, password: %s, emailname: %s", conf.Port, conf.Host, conf.UserName, conf.Password, conf.EmailName)
 	Register()
 }
 
@@ -91,16 +92,16 @@ func Register() {
 	if conf.Port < 0 || conf.Port > 65535 {
 		panic("port out of range ( 0-65535 )")
 	}
-	if IsEmpty(conf.Host) {
+	if isEmpty(conf.Host) {
 		panic("host cannot be empty")
 	}
-	if IsEmpty(conf.UserName) {
+	if isEmpty(conf.UserName) {
 		panic("userName cannot be empty")
 	}
-	if IsEmpty(conf.Password) {
+	if isEmpty(conf.Password) {
 		panic("password cannot be empty")
 	}
-	if IsEmpty(conf.EmailName) {
+	if isEmpty(conf.EmailName) {
 		conf.EmailName = conf.UserName
 	}
 	regFlag = true
@@ -121,10 +122,10 @@ func SendEmail(to []string, subject string, body string) error {
 	if len(to) == 0 {
 		return errors.New("to users cannot be empty")
 	}
-	if IsEmpty(subject) {
+	if isEmpty(subject) {
 		return errors.New("subject cannot be empty")
 	}
-	if IsEmpty(body) {
+	if isEmpty(body) {
 		return errors.New("body cannot be empty")
 	}
 	host := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
@@ -135,15 +136,15 @@ func SendEmail(to []string, subject string, body string) error {
 		if logFlag {
 			logger.Info("[sweet-email info] send email to %s", to[i])
 		}
-		send(auth, from, to[i], subject, body)
-		if logFlag {
+		flag := send(auth, from, to[i], subject, body)
+		if logFlag && flag {
 			logger.Info("[sweet-email info] send email to %s success", to[i])
 		}
 	}
 	return nil
 }
 
-func send(auth smtp.Auth, from string, to string, subject string, body string) {
+func send(auth smtp.Auth, from string, to string, subject string, body string) bool {
 	// 创建邮件内容
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + to + "\r\n" +
@@ -161,7 +162,7 @@ func send(auth smtp.Auth, from string, to string, subject string, body string) {
 	conn, err := tls.Dial("tcp", conf.Host, nil)
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] dial tls failed: %v", to, err)
-		return
+		return false
 	}
 	defer conn.Close()
 
@@ -169,42 +170,43 @@ func send(auth smtp.Auth, from string, to string, subject string, body string) {
 	client, err := smtp.NewClient(conn, conf.Host)
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] new client failed: %v", to, err)
-		return
+		return false
 	}
 	defer client.Quit()
 
 	// 开启身份验证
 	if err = client.Auth(auth); err != nil {
 		logger.Error("[sweet-email error] [%s] auth failed: %v", to, err)
-		return
+		return false
 	}
 
 	// 设置发送邮件选项（比如：发件人）
 	if err = client.Mail(conf.UserName); err != nil {
 		logger.Error("[sweet-email error] [%s] mail failed: %v", to, err)
-		return
+		return false
 	}
 
 	// 设置接收邮件选项（比如：收件人）
 	if err = client.Rcpt(to); err != nil {
 		logger.Error("[sweet-email error] [%s] rcpt failed: %v", to, err)
-		return
+		return false
 	}
 
 	// 写入邮件内容
 	w, err := client.Data()
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] data failed: %v", to, err)
-		return
+		return false
 	}
 	_, err = w.Write(msg)
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] write failed: %v", to, err)
-		return
+		return false
 	}
 	err = w.Close()
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] close failed: %v", to, err)
-		return
+		return false
 	}
+	return true
 }
