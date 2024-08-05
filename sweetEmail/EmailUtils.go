@@ -84,7 +84,6 @@ func AutoRegister(flag bool) {
 	conf.Password = valueString("${sweet.email.password}")
 	conf.EmailName = valueString("${sweet.email.emailname}")
 	logFlag = flag
-	logger.Info("port: %d, host: %s, username: %s, password: %s, emailname: %s", conf.Port, conf.Host, conf.UserName, conf.Password, conf.EmailName)
 	Register()
 }
 
@@ -136,7 +135,7 @@ func SendEmail(to []string, subject string, body string) error {
 		if logFlag {
 			logger.Info("[sweet-email info] send email to %s", to[i])
 		}
-		flag := send(auth, from, to[i], subject, body)
+		flag := send(auth, from, host, to[i], subject, body)
 		if logFlag && flag {
 			logger.Info("[sweet-email info] send email to %s success", to[i])
 		}
@@ -144,7 +143,7 @@ func SendEmail(to []string, subject string, body string) error {
 	return nil
 }
 
-func send(auth smtp.Auth, from string, to string, subject string, body string) bool {
+func send(auth smtp.Auth, from string, host string, to string, subject string, body string) bool {
 	// 创建邮件内容
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + to + "\r\n" +
@@ -159,7 +158,7 @@ func send(auth smtp.Auth, from string, to string, subject string, body string) b
 	// SMTP连接配置，QQ邮箱使用SSL加密连接
 
 	// 创建TLS连接
-	conn, err := tls.Dial("tcp", conf.Host, nil)
+	conn, err := tls.Dial("tcp", host, nil)
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] dial tls failed: %v", to, err)
 		return false
@@ -167,7 +166,7 @@ func send(auth smtp.Auth, from string, to string, subject string, body string) b
 	defer conn.Close()
 
 	// 构建SMTP客户端
-	client, err := smtp.NewClient(conn, conf.Host)
+	client, err := smtp.NewClient(conn, host)
 	if err != nil {
 		logger.Error("[sweet-email error] [%s] new client failed: %v", to, err)
 		return false
